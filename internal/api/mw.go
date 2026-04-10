@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -151,8 +152,8 @@ type rawThesEntry struct {
 // --- HTTP helpers ---
 
 func (c *Client) fetchDict(word string) ([]rawDictEntry, []string, error) {
-	url := c.dictBase + word + "?key=" + c.dictKey
-	body, err := c.get(url)
+	reqURL := c.dictBase + url.PathEscape(word) + "?key=" + c.dictKey
+	body, err := c.get(reqURL)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -160,8 +161,8 @@ func (c *Client) fetchDict(word string) ([]rawDictEntry, []string, error) {
 }
 
 func (c *Client) fetchThes(word string) ([]rawThesEntry, error) {
-	url := c.thesBase + word + "?key=" + c.thesKey
-	body, err := c.get(url)
+	reqURL := c.thesBase + url.PathEscape(word) + "?key=" + c.thesKey
+	body, err := c.get(reqURL)
 	if err != nil {
 		return nil, err
 	}
@@ -229,8 +230,9 @@ func buildEntry(word string, dict []rawDictEntry, thes []rawThesEntry) *Entry {
 
 	for _, d := range dict {
 		for _, def := range d.Def {
-			defs := extractDefs(def.SSeq)
+			defs, exs := extractDefs(def.SSeq)
 			e.Definitions = append(e.Definitions, defs...)
+			e.Examples = append(e.Examples, exs...)
 		}
 	}
 
@@ -259,15 +261,14 @@ func buildEntry(word string, dict []rawDictEntry, thes []rawThesEntry) *Entry {
 	return e
 }
 
-func extractDefs(sseq json.RawMessage) []string {
+func extractDefs(sseq json.RawMessage) (defs []string, examples []string) {
 	if sseq == nil {
-		return nil
+		return
 	}
 	var outer [][][]json.RawMessage
 	if err := json.Unmarshal(sseq, &outer); err != nil {
-		return nil
+		return
 	}
-	var defs []string
 	for _, group := range outer {
 		for _, sense := range group {
 			if len(sense) < 2 {
@@ -289,26 +290,42 @@ func extractDefs(sseq json.RawMessage) []string {
 					continue
 				}
 				var dtType string
-				if json.Unmarshal(dt[0], &dtType) != nil || dtType != "text" {
+				if json.Unmarshal(dt[0], &dtType) != nil {
 					continue
 				}
-				var text string
-				if json.Unmarshal(dt[1], &text) != nil {
-					continue
-				}
-				text = CleanMarkup(text)
-				if text == "" {
-					continue
-				}
-				if sd.SN != "" {
-					defs = append(defs, sd.SN+". "+text)
-				} else {
-					defs = append(defs, text)
+				switch dtType {
+				case "text":
+					var text string
+					if json.Unmarshal(dt[1], &text) != nil {
+						continue
+					}
+					text = CleanMarkup(text)
+					if text == "" {
+						continue
+					}
+					if sd.SN != "" {
+						defs = append(defs, sd.SN+". "+text)
+					} else {
+						defs = append(defs, text)
+					}
+				case "vis":
+					var visItems []struct {
+						T string `json:"t"`
+					}
+					if json.Unmarshal(dt[1], &visItems) != nil {
+						continue
+					}
+					for _, vi := range visItems {
+						ex := CleanMarkup(vi.T)
+						if ex != "" {
+							examples = append(examples, ex)
+						}
+					}
 				}
 			}
 		}
 	}
-	return defs
+	return
 }
 
 func extractEtymology(et json.RawMessage) string {

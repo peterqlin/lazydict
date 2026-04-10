@@ -97,10 +97,5 @@ func buildMarkdown(e *api.Entry) string {
 		fmt.Fprintf(&b, "%s\n\n", e.Etymology)
 	}
 
-	if e.Pronunciation != "" {
-		b.WriteString("## Pronunciation\n\n")
-		fmt.Fprintf(&b, "`%s`\n\n", e.Pronunciation)
-	}
-
 	return b.String()
 }

@@ -114,9 +114,9 @@ func New(cfg *config.Config, st *store.Store, initialWord string) Model {
 
 // Init implements tea.Model.
 func (m Model) Init() tea.Cmd {
-	cmds := []tea.Cmd{textinput.Blink, m.spin.Tick}
+	cmds := []tea.Cmd{textinput.Blink}
 	if m.search.Value() != "" {
-		cmds = append(cmds, m.doFetch(m.search.Value()))
+		cmds = append(cmds, m.doFetch(m.search.Value()), m.spin.Tick)
 	}
 	return tea.Batch(cmds...)
 }
@@ -147,9 +147,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m = m.resize()
 
 	case spinner.TickMsg:
-		var cmd tea.Cmd
-		m.spin, cmd = m.spin.Update(msg)
-		cmds = append(cmds, cmd)
+		if m.loading {
+			var cmd tea.Cmd
+			m.spin, cmd = m.spin.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 
 	case WordFetchedMsg:
 		m.loading = false
@@ -186,11 +188,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
-	// Forward to textinput when in typing mode (handles cursor blink etc.)
+	// Forward key messages to textinput when in typing mode.
 	if m.typingMode {
-		var cmd tea.Cmd
-		m.search, cmd = m.search.Update(msg)
-		cmds = append(cmds, cmd)
+		if _, ok := msg.(tea.KeyMsg); ok {
+			var cmd tea.Cmd
+			m.search, cmd = m.search.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 	}
 
 	return m, tea.Batch(cmds...)
