@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/230pe/lazydict/internal/store"
+	"github.com/peterqlin/lazydict/internal/store"
 )
 
 func newStore(t *testing.T) *store.Store {

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/230pe/lazydict/cmd"
+import "github.com/peterqlin/lazydict/cmd"
 
 func main() {
 	cmd.Execute()

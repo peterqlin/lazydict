@@ -8,9 +8,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"github.com/230pe/lazydict/config"
-	"github.com/230pe/lazydict/internal/app"
-	"github.com/230pe/lazydict/internal/store"
+	"github.com/peterqlin/lazydict/config"
+	"github.com/peterqlin/lazydict/internal/app"
+	"github.com/peterqlin/lazydict/internal/store"
 )
 
 var rootCmd = &cobra.Command{

@@ -8,9 +8,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/exp/teatest"
 
-	"github.com/230pe/lazydict/config"
-	"github.com/230pe/lazydict/internal/app"
-	"github.com/230pe/lazydict/internal/store"
+	"github.com/peterqlin/lazydict/config"
+	"github.com/peterqlin/lazydict/internal/app"
+	"github.com/peterqlin/lazydict/internal/store"
 )
 
 func newTestModel(t *testing.T) app.Model {

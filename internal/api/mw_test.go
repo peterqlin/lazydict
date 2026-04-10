@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/230pe/lazydict/internal/api"
+	"github.com/peterqlin/lazydict/internal/api"
 )
 
 const dictFixture = `[{

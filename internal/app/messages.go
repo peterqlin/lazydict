@@ -1,6 +1,6 @@
 package app
 
-import "github.com/230pe/lazydict/internal/api"
+import "github.com/peterqlin/lazydict/internal/api"
 
 type WordFetchedMsg struct {
 	Word  string

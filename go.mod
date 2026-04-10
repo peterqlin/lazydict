@@ -1,4 +1,4 @@
-module github.com/230pe/lazydict
+module github.com/peterqlin/lazydict
 
 go 1.24.2
 

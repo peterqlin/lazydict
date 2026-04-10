@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/230pe/lazydict/config"
+	"github.com/peterqlin/lazydict/config"
 )
 
 func TestLoadFromEnv(t *testing.T) {

@@ -12,10 +12,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/230pe/lazydict/config"
-	"github.com/230pe/lazydict/internal/api"
-	"github.com/230pe/lazydict/internal/store"
-	"github.com/230pe/lazydict/internal/ui"
+	"github.com/peterqlin/lazydict/config"
+	"github.com/peterqlin/lazydict/internal/api"
+	"github.com/peterqlin/lazydict/internal/store"
+	"github.com/peterqlin/lazydict/internal/ui"
 )
 
 type pane int

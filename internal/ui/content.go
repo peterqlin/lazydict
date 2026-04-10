@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/glamour"
-	"github.com/230pe/lazydict/internal/api"
+	"github.com/peterqlin/lazydict/internal/api"
 )
 
 func RenderEntry(entry *api.Entry, width int) string {
