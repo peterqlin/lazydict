@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"slices"
 	"sync"
@@ -38,8 +39,14 @@ func New(path string) (*Store, error) {
 }
 
 func (s *Store) save() {
-	b, _ := json.MarshalIndent(s.d, "", "  ")
-	_ = os.WriteFile(s.path, b, 0600)
+	b, err := json.MarshalIndent(s.d, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "lazydict: store marshal error: %v\n", err)
+		return
+	}
+	if err := os.WriteFile(s.path, b, 0600); err != nil {
+		fmt.Fprintf(os.Stderr, "lazydict: store write error: %v\n", err)
+	}
 }
 
 // AddHistory prepends word, deduplicates, and caps at maxHistory.
