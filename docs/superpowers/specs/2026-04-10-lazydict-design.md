@@ -77,7 +77,7 @@ Fixed **25% / 75%** split. Active pane gets a highlighted (blue) border; inactiv
                       │ PRONUNCIATION                                      │
                       │ noun: ˈre-kərd   verb: ri-ˈkȯrd                  │
                       └───────────────────────────────────────────────────┘
- / search  j/k navigate  h/l switch section  Tab focus  Shift-j/k scroll  b bookmark  q quit
+ i search  j/k navigate  h/l switch section  Tab focus  Shift-j/k scroll  b bookmark  q quit
 ```
 
 ### Left Pane Sections
@@ -101,17 +101,17 @@ Rendered via Glamour (Markdown) for clean typography. Scrollbar rendered on the 
 | Key | Action |
 |---|---|
 | `Tab` / `Shift-Tab` | Toggle focus: left pane ↔ right pane |
-| `h` / `l` | Cycle left pane sections: Search → History → Favorites (only when search input is not in typing mode) |
+| `h` / `l` | Cycle left pane sections: Search → History → Favorites (only when not in typing mode) |
 | `j` / `k` | Navigate items in History or Favorites |
 | `Enter` | Submit search (in Search section) / select item (in History or Favorites) |
-| `Esc` | Exit search typing mode without submitting; returns to nav mode |
-| `/` | Jump focus to Search section and enter typing mode from anywhere |
+| `Esc` | Exit typing mode without submitting; returns to nav mode |
+| `i` | Jump focus to Search section and enter typing mode from anywhere |
 | `Shift-j` / `Shift-k` | Scroll right content pane (works from either pane, except when typing in search) |
 | `b` | Bookmark / unbookmark current word |
 | `d` | Delete highlighted item from History or Favorites (no-op in Search section) |
-| `q` / `Ctrl-c` | Quit (no-op when search input is in typing mode — must Esc first) |
+| `q` / `Ctrl-c` | Quit (no-op when in typing mode — must Esc first) |
 
-**Typing mode:** When the Search section is active and the user presses `/` or `Enter` on it, the `textinput` captures all keystrokes. `h`/`l`/`j`/`k` type into the input. Press `Esc` to return to nav mode without searching, or `Enter` to submit.
+**Typing mode:** The app launches directly in typing mode with the search box focused and the cursor ready. `i` re-enters typing mode from anywhere. While typing, all keystrokes go to the input — `h`/`l`/`j`/`k` type literal characters. Press `Esc` to return to nav mode, or `Enter` to submit.
 
 ---
 
