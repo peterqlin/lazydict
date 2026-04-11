@@ -2,8 +2,6 @@
 
 A lazygit-inspired terminal UI for the [Merriam-Webster Dictionary](https://dictionaryapi.com), built with [Bubbletea](https://github.com/charmbracelet/bubbletea) and the Charm library stack.
 
-![lazydict layout: sidebar with search/history/favorites on the left, scrollable definition page on the right](.superpowers/brainstorm/2548-1775857093/content/tui-mockup.html)
-
 ## Features
 
 - **Instant lookup** — search any word, get definitions, synonyms, antonyms, examples, forms, and etymology in one scrollable page
