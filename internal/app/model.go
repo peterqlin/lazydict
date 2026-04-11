@@ -420,5 +420,5 @@ func (m Model) renderStatusBar() string {
 			ui.KeyHint("q") + " quit",
 		}
 	}
-	return ui.StatusBarStyle(m.width).Render(strings.Join(parts, "  "))
+	return ui.StatusBarStyle().Render(strings.Join(parts, "  "))
 }

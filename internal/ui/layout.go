@@ -34,11 +34,9 @@ func SectionTitle(active bool) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(c).Bold(true)
 }
 
-func StatusBarStyle(width int) lipgloss.Style {
+func StatusBarStyle() lipgloss.Style {
 	return lipgloss.NewStyle().
-		Background(ColorBgPanel).
 		Foreground(ColorMuted).
-		Width(width).
 		PaddingLeft(1).
 		PaddingRight(1)
 }
