@@ -16,7 +16,7 @@ var (
 	ColorAccent  = lipgloss.Color("#79c0ff")
 	ColorBg      = lipgloss.Color("#0d1117")
 	ColorBgPanel = lipgloss.Color("#161b22")
-	ColorBorder  = lipgloss.Color("#30363d")
+	ColorBorder  = lipgloss.Color("#d4dce0")
 )
 
 func BorderActive() lipgloss.Style {
@@ -49,9 +49,9 @@ func BorderWithTitle(content, label string, num, width int, active bool) string 
 
 	bc := lipgloss.NewStyle().Foreground(borderColor)
 	numStyle := lipgloss.NewStyle().Foreground(ColorAccent)
-	lblStyle := lipgloss.NewStyle().Foreground(ColorMuted)
+	lblStyle := lipgloss.NewStyle().Foreground(ColorBorder)
 	if active {
-		lblStyle = lipgloss.NewStyle().Foreground(ColorBlue).Bold(true)
+		lblStyle = lipgloss.NewStyle().Foreground(ColorBorder).Bold(true)
 	}
 
 	numStr := fmt.Sprintf("[%d]", num)
