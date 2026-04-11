@@ -51,7 +51,7 @@ func BorderWithTitle(content, label string, num, width int, active bool) string 
 	numStyle := lipgloss.NewStyle().Foreground(ColorAccent)
 	lblStyle := lipgloss.NewStyle().Foreground(ColorBorder)
 	if active {
-		lblStyle = lipgloss.NewStyle().Foreground(ColorBorder).Bold(true)
+		lblStyle = lipgloss.NewStyle().Foreground(ColorBlue).Bold(true)
 	}
 
 	numStr := fmt.Sprintf("[%d]", num)
