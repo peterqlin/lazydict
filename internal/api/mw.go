@@ -362,10 +362,11 @@ var (
 	mwRdquo = regexp.MustCompile(`\{rdquo\}`)
 )
 
-// CleanMarkup removes MW API markup tags. Exported for tests.
+// CleanMarkup removes MW API markup tags and formatting characters. Exported for tests.
 func CleanMarkup(s string) string {
 	s = mwLdquo.ReplaceAllString(s, "\u201c")
 	s = mwRdquo.ReplaceAllString(s, "\u201d")
 	s = mwTagRe.ReplaceAllString(s, "")
+	s = strings.ReplaceAll(s, "*", "")
 	return strings.TrimSpace(s)
 }
