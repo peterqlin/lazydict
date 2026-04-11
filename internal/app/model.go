@@ -242,6 +242,15 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 	case key.Matches(msg, m.keys.SectionRight) && m.focused == paneLeft:
 		m.activeSection = (m.activeSection + 1) % 3
 
+	case key.Matches(msg, m.keys.Section1) && m.focused == paneLeft:
+		m.activeSection = sectionSearch
+
+	case key.Matches(msg, m.keys.Section2) && m.focused == paneLeft:
+		m.activeSection = sectionHistory
+
+	case key.Matches(msg, m.keys.Section3) && m.focused == paneLeft:
+		m.activeSection = sectionFavorites
+
 	case key.Matches(msg, m.keys.Up) && m.focused == paneLeft:
 		switch m.activeSection {
 		case sectionHistory:
@@ -316,7 +325,7 @@ func (m Model) resize() Model {
 	statusH := 1
 	innerH := m.height - statusH
 
-	searchH := 6 // border-top + "SEARCH" label + input + border-bottom
+	searchH := 3 // custom-top-border + input + bottom-border
 	remaining := innerH - searchH
 	historyH := remaining * 6 / 10
 	favoritesH := remaining - historyH
@@ -349,8 +358,8 @@ func (m Model) View() string {
 	leftW := ui.LeftPanelWidth(m.width)
 
 	searchView := m.renderSearch(leftW)
-	historyView := m.renderWordList(m.history, "HISTORY", sectionHistory, leftW)
-	favoritesView := m.renderWordList(m.favorites, "FAVORITES", sectionFavorites, leftW)
+	historyView := m.renderWordList(m.history, "History", sectionHistory, leftW)
+	favoritesView := m.renderWordList(m.favorites, "Favorites", sectionFavorites, leftW)
 	leftPane := lipgloss.JoinVertical(lipgloss.Left, searchView, historyView, favoritesView)
 
 	rightPane := m.renderContent()
@@ -363,26 +372,12 @@ func (m Model) View() string {
 
 func (m Model) renderSearch(width int) string {
 	active := m.focused == paneLeft && m.activeSection == sectionSearch
-	title := ui.SectionTitle(active).Render("SEARCH")
-	body := lipgloss.JoinVertical(lipgloss.Left, title, m.search.View())
-
-	style := ui.BorderInactive().Width(width - 2)
-	if active {
-		style = ui.BorderActive().Width(width - 2)
-	}
-	return style.Render(body)
+	return ui.BorderWithTitle(m.search.View(), "Search", 1, width, active)
 }
 
 func (m Model) renderWordList(l list.Model, label string, sec section, width int) string {
 	active := m.focused == paneLeft && m.activeSection == sec
-	title := ui.SectionTitle(active).Render(label)
-	body := lipgloss.JoinVertical(lipgloss.Left, title, l.View())
-
-	style := ui.BorderInactive().Width(width - 2)
-	if active {
-		style = ui.BorderActive().Width(width - 2)
-	}
-	return style.Render(body)
+	return ui.BorderWithTitle(l.View(), label, int(sec)+1, width, active)
 }
 
 func (m Model) renderContent() string {
@@ -414,7 +409,7 @@ func (m Model) renderStatusBar() string {
 		parts = []string{
 			ui.KeyHint("i") + " search",
 			ui.KeyHint("j/k") + " navigate",
-			ui.KeyHint("h/l") + " section",
+			ui.KeyHint("1-3") + " section",
 			ui.KeyHint("tab") + " switch pane",
 			ui.KeyHint("Shift-j/k") + " scroll",
 			ui.KeyHint("b") + " bookmark",

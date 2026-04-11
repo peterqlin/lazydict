@@ -1,6 +1,11 @@
 package ui
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 var (
 	ColorBlue    = lipgloss.Color("#58a6ff")
@@ -26,19 +31,49 @@ func BorderInactive() lipgloss.Style {
 		BorderForeground(ColorBorder)
 }
 
-func SectionTitle(active bool) lipgloss.Style {
-	c := ColorMuted
-	if active {
-		c = ColorBlue
-	}
-	return lipgloss.NewStyle().Foreground(c).Bold(true)
-}
 
 func StatusBarStyle() lipgloss.Style {
 	return lipgloss.NewStyle().
 		Foreground(ColorMuted).
 		PaddingLeft(1).
 		PaddingRight(1)
+}
+
+// BorderWithTitle renders a bordered panel with the section title embedded in the top
+// border line, e.g. ╭─[1]─Search──────────╮. width is the total outer width.
+func BorderWithTitle(content, label string, num, width int, active bool) string {
+	borderColor := ColorBorder
+	if active {
+		borderColor = ColorBlue
+	}
+
+	bc := lipgloss.NewStyle().Foreground(borderColor)
+	numStyle := lipgloss.NewStyle().Foreground(ColorAccent)
+	lblStyle := lipgloss.NewStyle().Foreground(ColorMuted)
+	if active {
+		lblStyle = lipgloss.NewStyle().Foreground(ColorBlue).Bold(true)
+	}
+
+	numStr := fmt.Sprintf("[%d]", num)
+	// All chars are ASCII so len() == visual width.
+	titleSeg := bc.Render("─") + numStyle.Render(numStr) + bc.Render("─") + lblStyle.Render(label)
+	titleSegW := 1 + len(numStr) + 1 + len(label)
+
+	innerW := width - 2 // minus two corner chars
+	fillW := innerW - titleSegW
+	if fillW < 0 {
+		fillW = 0
+	}
+	topLine := bc.Render("╭") + titleSeg + bc.Render(strings.Repeat("─", fillW)) + bc.Render("╮")
+
+	body := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderTop(false).
+		BorderForeground(borderColor).
+		Width(width - 2).
+		Render(content)
+
+	return topLine + "\n" + body
 }
 
 func KeyHint(key string) string {

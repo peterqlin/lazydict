@@ -7,6 +7,9 @@ type KeyMap struct {
 	SwitchPane   key.Binding
 	SectionLeft  key.Binding
 	SectionRight key.Binding
+	Section1     key.Binding
+	Section2     key.Binding
+	Section3     key.Binding
 	Up           key.Binding
 	Down         key.Binding
 	EnterTyping  key.Binding
@@ -35,6 +38,18 @@ func DefaultKeyMap() KeyMap {
 		SectionRight: key.NewBinding(
 			key.WithKeys("l"),
 			key.WithHelp("l", "next section"),
+		),
+		Section1: key.NewBinding(
+			key.WithKeys("1"),
+			key.WithHelp("1", "search"),
+		),
+		Section2: key.NewBinding(
+			key.WithKeys("2"),
+			key.WithHelp("2", "history"),
+		),
+		Section3: key.NewBinding(
+			key.WithKeys("3"),
+			key.WithHelp("3", "favorites"),
 		),
 		Up: key.NewBinding(
 			key.WithKeys("k", "up"),
