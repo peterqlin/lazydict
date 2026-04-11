@@ -81,6 +81,7 @@ func New(cfg *config.Config, st *store.Store, initialWord string) Model {
 	ti := textinput.New()
 	ti.Placeholder = "search…"
 	ti.CharLimit = 100
+	ti.ShowSuggestions = true
 	ti.Focus()
 
 	sp := spinner.New()
@@ -102,6 +103,7 @@ func New(cfg *config.Config, st *store.Store, initialWord string) Model {
 
 	m.history = ui.NewWordList(st.History(), 0, 0)
 	m.favorites = ui.NewWordList(st.Favorites(), 0, 0)
+	m.search.SetSuggestions(st.History())
 	m.content = viewport.New(0, 0)
 	m.content.SetContent(ui.RenderWelcome())
 
@@ -161,6 +163,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.entry = msg.Entry
 		m.store.AddHistory(msg.Word)
 		ui.SetWords(&m.history, m.store.History())
+		m.search.SetSuggestions(m.store.History())
 		m.content.SetContent(ui.RenderEntry(msg.Entry, m.content.Width))
 		m.content.GotoTop()
 
