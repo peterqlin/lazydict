@@ -290,6 +290,8 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 
 	case key.Matches(msg, m.keys.Delete) && m.focused == paneLeft:
 		switch m.activeSection {
+		case sectionSearch:
+			m.search.SetValue("")
 		case sectionHistory:
 			if word := ui.SelectedWord(m.history); word != "" {
 				m.store.RemoveHistory(word)
