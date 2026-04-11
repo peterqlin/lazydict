@@ -184,16 +184,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.content.SetContent(ui.RenderError(m.err))
 
 	case tea.KeyMsg:
+		wasTyping := m.typingMode
 		cmd := m.handleKey(msg)
 		cmds = append(cmds, cmd)
-	}
-
-	// Forward key messages to textinput when in typing mode.
-	if m.typingMode {
-		if _, ok := msg.(tea.KeyMsg); ok {
-			var cmd tea.Cmd
-			m.search, cmd = m.search.Update(msg)
-			cmds = append(cmds, cmd)
+		// Forward to textinput only if we were already in typing mode before
+		// this key — prevents the activating key (e.g. "i") from being echoed.
+		if wasTyping {
+			var tiCmd tea.Cmd
+			m.search, tiCmd = m.search.Update(msg)
+			cmds = append(cmds, tiCmd)
 		}
 	}
 
