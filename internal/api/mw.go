@@ -223,15 +223,22 @@ func buildEntry(word string, dict []rawDictEntry, thes []rawThesEntry) *Entry {
 		e.Pronunciation = first.HWI.Prs[0].MW
 	}
 
+	posIndex := map[string]int{}
 	for _, d := range dict {
-		group := PosGroup{POS: d.FL}
+		var defs []string
 		for _, def := range d.Def {
-			defs, exs := extractDefs(def.SSeq)
-			group.Defs = append(group.Defs, defs...)
+			ds, exs := extractDefs(def.SSeq)
+			defs = append(defs, ds...)
 			e.Examples = append(e.Examples, exs...)
 		}
-		if len(group.Defs) > 0 {
-			e.DefinitionGroups = append(e.DefinitionGroups, group)
+		if len(defs) == 0 {
+			continue
+		}
+		if idx, ok := posIndex[d.FL]; ok {
+			e.DefinitionGroups[idx].Defs = append(e.DefinitionGroups[idx].Defs, defs...)
+		} else {
+			posIndex[d.FL] = len(e.DefinitionGroups)
+			e.DefinitionGroups = append(e.DefinitionGroups, PosGroup{POS: d.FL, Defs: defs})
 		}
 	}
 

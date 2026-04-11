@@ -160,3 +160,49 @@ func TestFetch_MultiPOS(t *testing.T) {
 		t.Errorf("group[1].POS = %q, want verb", entry.DefinitionGroups[1].POS)
 	}
 }
+
+const dictSamePOSFixture = `[
+  {
+    "meta": {"id": "record:1", "stems": ["record"]},
+    "hwi": {"hw": "record", "prs": [{"mw": "ˈre-kərd"}]},
+    "fl": "noun",
+    "def": [{"sseq": [[["sense", {"sn": "1", "dt": [["text", "a piece of evidence"]]}]]]}]
+  },
+  {
+    "meta": {"id": "record:2", "stems": ["record"]},
+    "hwi": {"hw": "record"},
+    "fl": "noun",
+    "def": [{"sseq": [[["sense", {"sn": "2", "dt": [["text", "the best performance"]]}]]]}]
+  }
+]`
+
+func TestFetch_SamePOSMerged(t *testing.T) {
+	dictSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(dictSamePOSFixture))
+	}))
+	defer dictSrv.Close()
+
+	thesSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`[]`))
+	}))
+	defer thesSrv.Close()
+
+	client := api.NewClient("k", "k",
+		api.WithDictBaseURL(dictSrv.URL+"/"),
+		api.WithThesBaseURL(thesSrv.URL+"/"),
+	)
+
+	entry, err := client.Fetch("record")
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	if len(entry.DefinitionGroups) != 1 {
+		t.Fatalf("expected 1 POS group (merged), got %d", len(entry.DefinitionGroups))
+	}
+	if entry.DefinitionGroups[0].POS != "noun" {
+		t.Errorf("POS = %q, want noun", entry.DefinitionGroups[0].POS)
+	}
+	if len(entry.DefinitionGroups[0].Defs) != 2 {
+		t.Errorf("expected 2 merged defs, got %d", len(entry.DefinitionGroups[0].Defs))
+	}
+}

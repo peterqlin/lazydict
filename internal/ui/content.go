@@ -26,7 +26,7 @@ func posAbbrev(pos string) string {
 		if len(pos) <= 4 {
 			return pos
 		}
-		return pos[:4]
+		return string([]rune(pos)[:4])
 	}
 }
 
