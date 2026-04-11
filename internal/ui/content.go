@@ -51,21 +51,16 @@ func buildMarkdown(e *api.Entry) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n", e.Word)
-	if e.FunctionalLabel != "" || e.Pronunciation != "" {
-		parts := []string{}
-		if e.FunctionalLabel != "" {
-			parts = append(parts, "*"+e.FunctionalLabel+"*")
-		}
-		if e.Pronunciation != "" {
-			parts = append(parts, "`"+e.Pronunciation+"`")
-		}
-		fmt.Fprintf(&b, "%s\n", strings.Join(parts, " · "))
+	if e.Pronunciation != "" {
+		fmt.Fprintf(&b, "`%s`\n", e.Pronunciation)
 	}
 	b.WriteString("\n---\n\n")
 
-	if len(e.Definitions) > 0 {
-		b.WriteString("## Definitions\n\n")
-		for _, d := range e.Definitions {
+	for _, group := range e.DefinitionGroups {
+		if group.POS != "" {
+			fmt.Fprintf(&b, "## %s\n\n", group.POS)
+		}
+		for _, d := range group.Defs {
 			fmt.Fprintf(&b, "%s\n\n", d)
 		}
 	}

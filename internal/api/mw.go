@@ -16,17 +16,22 @@ const (
 	defaultThesBase = "https://www.dictionaryapi.com/api/v3/references/thesaurus/json/"
 )
 
+// PosGroup holds definitions for a single part of speech.
+type PosGroup struct {
+	POS  string
+	Defs []string
+}
+
 // Entry is the normalised result for a single lookup.
 type Entry struct {
-	Word            string
-	Pronunciation   string
-	FunctionalLabel string
-	Definitions     []string
-	Synonyms        []string
-	Antonyms        []string
-	Examples        []string
-	Forms           []string
-	Etymology       string
+	Word             string
+	Pronunciation    string
+	DefinitionGroups []PosGroup
+	Synonyms         []string
+	Antonyms         []string
+	Examples         []string
+	Forms            []string
+	Etymology        string
 }
 
 // NotFoundError is returned when the API returns suggestions instead of entries.
@@ -218,21 +223,15 @@ func buildEntry(word string, dict []rawDictEntry, thes []rawThesEntry) *Entry {
 		e.Pronunciation = first.HWI.Prs[0].MW
 	}
 
-	seen := map[string]bool{first.FL: true}
-	labels := []string{first.FL}
-	for _, d := range dict[1:] {
-		if !seen[d.FL] {
-			seen[d.FL] = true
-			labels = append(labels, d.FL)
-		}
-	}
-	e.FunctionalLabel = strings.Join(labels, " / ")
-
 	for _, d := range dict {
+		group := PosGroup{POS: d.FL}
 		for _, def := range d.Def {
 			defs, exs := extractDefs(def.SSeq)
-			e.Definitions = append(e.Definitions, defs...)
+			group.Defs = append(group.Defs, defs...)
 			e.Examples = append(e.Examples, exs...)
+		}
+		if len(group.Defs) > 0 {
+			e.DefinitionGroups = append(e.DefinitionGroups, group)
 		}
 	}
 
@@ -303,11 +302,7 @@ func extractDefs(sseq json.RawMessage) (defs []string, examples []string) {
 					if text == "" {
 						continue
 					}
-					if sd.SN != "" {
-						defs = append(defs, sd.SN+". "+text)
-					} else {
-						defs = append(defs, text)
-					}
+					defs = append(defs, text)
 				case "vis":
 					var visItems []struct {
 						T string `json:"t"`

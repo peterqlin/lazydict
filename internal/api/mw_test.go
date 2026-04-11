@@ -46,14 +46,17 @@ func TestFetch_HappyPath(t *testing.T) {
 	if entry.Word != "record" {
 		t.Errorf("Word = %q, want %q", entry.Word, "record")
 	}
-	if entry.FunctionalLabel != "noun" {
-		t.Errorf("FL = %q, want %q", entry.FunctionalLabel, "noun")
+	if len(entry.DefinitionGroups) == 0 {
+		t.Fatal("expected at least one definition group")
 	}
-	if len(entry.Definitions) == 0 {
-		t.Error("expected at least one definition")
+	if entry.DefinitionGroups[0].POS != "noun" {
+		t.Errorf("POS = %q, want noun", entry.DefinitionGroups[0].POS)
 	}
-	if entry.Definitions[0] != "1. a thing constituting evidence" {
-		t.Errorf("def = %q", entry.Definitions[0])
+	if len(entry.DefinitionGroups[0].Defs) == 0 {
+		t.Error("expected at least one definition in group")
+	}
+	if entry.DefinitionGroups[0].Defs[0] != "a thing constituting evidence" {
+		t.Errorf("def = %q", entry.DefinitionGroups[0].Defs[0])
 	}
 	if entry.Etymology != "Middle English record" {
 		t.Errorf("etymology = %q", entry.Etymology)
@@ -109,5 +112,51 @@ func TestCleanMarkup(t *testing.T) {
 		if got != c.want {
 			t.Errorf("CleanMarkup(%q) = %q, want %q", c.in, got, c.want)
 		}
+	}
+}
+
+const dictMultiPOSFixture = `[
+  {
+    "meta": {"id": "record:1", "stems": ["record"]},
+    "hwi": {"hw": "record", "prs": [{"mw": "ˈre-kərd"}]},
+    "fl": "noun",
+    "def": [{"sseq": [[["sense", {"sn": "1", "dt": [["text", "a piece of evidence"]]}]]]}]
+  },
+  {
+    "meta": {"id": "record:2", "stems": ["record"]},
+    "hwi": {"hw": "record"},
+    "fl": "verb",
+    "def": [{"sseq": [[["sense", {"sn": "1", "dt": [["text", "to set down in writing"]]}]]]}]
+  }
+]`
+
+func TestFetch_MultiPOS(t *testing.T) {
+	dictSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(dictMultiPOSFixture))
+	}))
+	defer dictSrv.Close()
+
+	thesSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`[]`))
+	}))
+	defer thesSrv.Close()
+
+	client := api.NewClient("k", "k",
+		api.WithDictBaseURL(dictSrv.URL+"/"),
+		api.WithThesBaseURL(thesSrv.URL+"/"),
+	)
+
+	entry, err := client.Fetch("record")
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	if len(entry.DefinitionGroups) != 2 {
+		t.Fatalf("expected 2 POS groups, got %d", len(entry.DefinitionGroups))
+	}
+	if entry.DefinitionGroups[0].POS != "noun" {
+		t.Errorf("group[0].POS = %q, want noun", entry.DefinitionGroups[0].POS)
+	}
+	if entry.DefinitionGroups[1].POS != "verb" {
+		t.Errorf("group[1].POS = %q, want verb", entry.DefinitionGroups[1].POS)
 	}
 }
