@@ -120,17 +120,20 @@ func RenderWelcome() string {
 //	2 living or lasting only one day (of
 //	  certain insects and plants)
 func formatDef(numStyle lipgloss.Style, n int, text string, width int) string {
-	textWidth := width - 2 // "N " prefix is 2 chars
+	numStr := strconv.Itoa(n)
+	prefixLen := len(numStr) + 1 // "N " — use raw length, not ANSI-escaped length
+	textWidth := width - prefixLen
 	if textWidth < 1 {
 		textWidth = 1
 	}
+	indent := strings.Repeat(" ", prefixLen)
 	lines := strings.Split(strings.TrimRight(wordwrap.String(text, textWidth), "\n"), "\n")
 	var b strings.Builder
 	for i, line := range lines {
 		if i == 0 {
-			fmt.Fprintf(&b, "%s %s\n", numStyle.Render(strconv.Itoa(n)), line)
+			fmt.Fprintf(&b, "%s %s\n", numStyle.Render(numStr), line)
 		} else {
-			fmt.Fprintf(&b, "  %s\n", line)
+			fmt.Fprintf(&b, "%s%s\n", indent, line)
 		}
 	}
 	return b.String()
