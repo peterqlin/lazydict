@@ -315,7 +315,7 @@ func (m Model) resize() Model {
 	statusH := 1
 	innerH := m.height - statusH
 
-	searchH := 3
+	searchH := 4 // border-top + "SEARCH" label + input + border-bottom
 	remaining := innerH - searchH
 	historyH := remaining * 6 / 10
 	favoritesH := remaining - historyH
