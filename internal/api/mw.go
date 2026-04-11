@@ -357,15 +357,19 @@ func extractEtymology(et json.RawMessage) string {
 }
 
 var (
-	mwTagRe = regexp.MustCompile(`\{[^}]+\}`)
-	mwLdquo = regexp.MustCompile(`\{ldquo\}`)
-	mwRdquo = regexp.MustCompile(`\{rdquo\}`)
+	mwTagRe    = regexp.MustCompile(`\{[^}]+\}`)
+	mwLdquo    = regexp.MustCompile(`\{ldquo\}`)
+	mwRdquo    = regexp.MustCompile(`\{rdquo\}`)
+	mwLinkTag  = regexp.MustCompile(`\{[^|}]+\|([^|}]+)[^}]*\}`)
 )
 
 // CleanMarkup removes MW API markup tags and formatting characters. Exported for tests.
+// Tags with pipe-delimited display text (e.g. {d_link|word|id}, {sx|word||}) have
+// their display text preserved; all other tags are stripped.
 func CleanMarkup(s string) string {
 	s = mwLdquo.ReplaceAllString(s, "\u201c")
 	s = mwRdquo.ReplaceAllString(s, "\u201d")
+	s = mwLinkTag.ReplaceAllString(s, "$1")
 	s = mwTagRe.ReplaceAllString(s, "")
 	s = strings.ReplaceAll(s, "*", "")
 	return strings.TrimSpace(s)
