@@ -106,6 +106,10 @@ func TestCleanMarkup(t *testing.T) {
 		{"{it}evidence{/it}", "evidence"},
 		{"{ldquo}hello{rdquo}", "\u201chello\u201d"},
 		{"plain text", "plain text"},
+		// {bc} in the middle should produce a colon separator
+		{"{bc}first meaning {bc}second meaning", "first meaning : second meaning"},
+		// {bc} at start only is trimmed, not doubled
+		{"{bc}only one part", "only one part"},
 	}
 	for _, c := range cases {
 		got := api.CleanMarkup(c.in)

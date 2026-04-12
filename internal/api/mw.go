@@ -357,20 +357,25 @@ func extractEtymology(et json.RawMessage) string {
 }
 
 var (
-	mwTagRe    = regexp.MustCompile(`\{[^}]+\}`)
-	mwLdquo    = regexp.MustCompile(`\{ldquo\}`)
-	mwRdquo    = regexp.MustCompile(`\{rdquo\}`)
-	mwLinkTag  = regexp.MustCompile(`\{[^|}]+\|([^|}]+)[^}]*\}`)
+	mwTagRe   = regexp.MustCompile(`\{[^}]+\}`)
+	mwLdquo   = regexp.MustCompile(`\{ldquo\}`)
+	mwRdquo   = regexp.MustCompile(`\{rdquo\}`)
+	mwLinkTag = regexp.MustCompile(`\{[^|}]+\|([^|}]+)[^}]*\}`)
+	mwBc      = regexp.MustCompile(`\{bc\}`)
 )
 
 // CleanMarkup removes MW API markup tags and formatting characters. Exported for tests.
 // Tags with pipe-delimited display text (e.g. {d_link|word|id}, {sx|word||}) have
-// their display text preserved; all other tags are stripped.
+// their display text preserved; {bc} (bold colon) becomes ": "; all other tags are stripped.
 func CleanMarkup(s string) string {
 	s = mwLdquo.ReplaceAllString(s, "\u201c")
 	s = mwRdquo.ReplaceAllString(s, "\u201d")
+	s = mwBc.ReplaceAllString(s, ": ")
 	s = mwLinkTag.ReplaceAllString(s, "$1")
 	s = mwTagRe.ReplaceAllString(s, "")
 	s = strings.ReplaceAll(s, "*", "")
-	return strings.TrimSpace(s)
+	s = strings.TrimSpace(s)
+	// Strip a leading ": " that results from {bc} at the start of a definition.
+	s = strings.TrimPrefix(s, ": ")
+	return s
 }
