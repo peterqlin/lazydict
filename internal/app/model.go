@@ -369,7 +369,8 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 		}
 
 	case key.Matches(msg, m.keys.Flag) && m.currentWord != "":
-		// implemented in Task 5
+		m.flagStore.Add(m.currentWord, m.content.View())
+		ui.SetWords(&m.flags, m.flagStore.Words())
 	}
 
 	return nil

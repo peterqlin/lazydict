@@ -146,3 +146,21 @@ func TestCacheHitMovesToHistoryTop(t *testing.T) {
 		t.Errorf("expected alpha at top after cache hit, got %q", hist[0])
 	}
 }
+
+func TestFlagCurrentWord(t *testing.T) {
+	cfg := &config.Config{MWKey: "test", MWThesKey: "test"}
+	st, _ := store.New(filepath.Join(t.TempDir(), "data.json"))
+	fs, _ := store.NewFlagStore(filepath.Join(t.TempDir(), "flags.json"))
+	m := app.New(cfg, st, fs, "")
+
+	entry := &api.Entry{}
+	m2, _ := m.Update(app.WordFetchedMsg{Word: "ephemeral", Entry: entry})
+	m3, _ := m2.(app.Model).Update(tea.KeyMsg{Type: tea.KeyEsc})
+
+	_, _ = m3.(app.Model).Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
+
+	entries := fs.All()
+	if len(entries) != 1 || entries[0].Word != "ephemeral" {
+		t.Errorf("expected ephemeral to be flagged, got %+v", entries)
+	}
+}
