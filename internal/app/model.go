@@ -548,19 +548,26 @@ func (m Model) renderContent() string {
 
 func (m Model) renderStatusBar() string {
 	var parts []string
-	if m.insertTarget != insertNone {
+	switch m.insertTarget {
+	case insertSearch:
 		parts = []string{
-			ui.KeyHint("esc") + " cancel",
+			ui.KeyHint("esc") + " normal",
 			ui.KeyHint("enter") + " search",
 		}
-	} else {
+	case insertFlagNote:
 		parts = []string{
-			ui.KeyHint("i") + " search",
+			ui.KeyHint("esc") + " done",
+		}
+	default:
+		parts = []string{
+			ui.KeyHint("i") + " insert",
+			ui.KeyHint("c") + " clear+search",
 			ui.KeyHint("j/k") + " navigate",
 			ui.KeyHint("1-4") + " section",
 			ui.KeyHint("tab") + " switch pane",
-			ui.KeyHint("Shift-j/k") + " scroll",
+			ui.KeyHint("J/K") + " scroll",
 			ui.KeyHint("b") + " bookmark",
+			ui.KeyHint("f") + " flag",
 			ui.KeyHint("d") + " delete",
 			ui.KeyHint("q") + " quit",
 		}
