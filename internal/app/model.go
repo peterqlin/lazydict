@@ -282,6 +282,9 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 			if cached, ok := m.cache[word]; ok {
 				m.entry = cached
 				m.currentWord = word
+				m.store.AddHistory(word)
+				ui.SetWords(&m.history, m.store.History())
+				m.search.SetSuggestions(m.store.History())
 				m.content.SetContent(ui.RenderEntry(cached, m.content.Width))
 				m.content.GotoTop()
 			} else {
