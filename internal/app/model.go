@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -56,6 +57,8 @@ type Model struct {
 	favorites list.Model
 	flags     list.Model
 	content   viewport.Model
+	flagSnap  viewport.Model
+	flagNote  textarea.Model
 	spin      spinner.Model
 
 	entry       *api.Entry
@@ -120,6 +123,13 @@ func New(cfg *config.Config, st *store.Store, fs *store.FlagStore, initialWord s
 	m.search.SetSuggestions(st.History())
 	m.content = viewport.New(0, 0)
 	m.content.SetContent(ui.RenderWelcome())
+	m.flagSnap = viewport.New(0, 0)
+
+	ta := textarea.New()
+	ta.Placeholder = "Describe the issue…"
+	ta.CharLimit = 500
+	ta.ShowLineNumbers = false
+	m.flagNote = ta
 
 	if initialWord != "" {
 		m.search.SetValue(initialWord)
@@ -202,6 +212,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		wasInSearch := m.insertTarget == insertSearch
+		wasInFlagNote := m.insertTarget == insertFlagNote
 		cmd := m.handleKey(msg)
 		cmds = append(cmds, cmd)
 		// Forward to textinput only if we were already in search insert mode before
@@ -210,6 +221,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var tiCmd tea.Cmd
 			m.search, tiCmd = m.search.Update(msg)
 			cmds = append(cmds, tiCmd)
+		}
+		if wasInFlagNote {
+			var taCmd tea.Cmd
+			m.flagNote, taCmd = m.flagNote.Update(msg)
+			cmds = append(cmds, taCmd)
 		}
 	}
 
@@ -238,6 +254,10 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 	case insertFlagNote:
 		if key.Matches(msg, m.keys.ExitTyping) {
 			m.insertTarget = insertNone
+			m.flagNote.Blur()
+			if word := ui.SelectedWord(m.flags); word != "" {
+				m.flagStore.UpdateNote(word, m.flagNote.Value())
+			}
 		}
 		return nil
 	}
@@ -261,6 +281,10 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 			m.insertTarget = insertSearch
 			m.search.Focus()
 			return textinput.Blink
+		case m.activeSection == sectionFlags && m.focused == paneRight:
+			m.insertTarget = insertFlagNote
+			m.flagNote.Focus()
+			return textarea.Blink
 		}
 
 	case key.Matches(msg, m.keys.ClearSearch) && m.activeSection == sectionSearch:
@@ -272,9 +296,15 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 
 	case key.Matches(msg, m.keys.SectionLeft) && m.focused == paneLeft:
 		m.activeSection = (m.activeSection + 3) % 4
+		if m.activeSection == sectionFlags {
+			m.loadFlagDetail()
+		}
 
 	case key.Matches(msg, m.keys.SectionRight) && m.focused == paneLeft:
 		m.activeSection = (m.activeSection + 1) % 4
+		if m.activeSection == sectionFlags {
+			m.loadFlagDetail()
+		}
 
 	case key.Matches(msg, m.keys.Section1) && m.focused == paneLeft:
 		m.activeSection = sectionSearch
@@ -287,6 +317,7 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 
 	case key.Matches(msg, m.keys.Section4) && m.focused == paneLeft:
 		m.activeSection = sectionFlags
+		m.loadFlagDetail()
 
 	case key.Matches(msg, m.keys.Up) && m.focused == paneLeft:
 		switch m.activeSection {
@@ -296,6 +327,7 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 			m.favorites.CursorUp()
 		case sectionFlags:
 			m.flags.CursorUp()
+			m.loadFlagDetail()
 		}
 
 	case key.Matches(msg, m.keys.Down) && m.focused == paneLeft:
@@ -306,6 +338,7 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 			m.favorites.CursorDown()
 		case sectionFlags:
 			m.flags.CursorDown()
+			m.loadFlagDetail()
 		}
 
 	case key.Matches(msg, m.keys.Submit) && m.focused == paneLeft:
@@ -365,7 +398,11 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 				ui.SetWords(&m.favorites, m.store.Favorites())
 			}
 		case sectionFlags:
-			// flag deletion handled in Task 6
+			if word := ui.SelectedWord(m.flags); word != "" {
+				m.flagStore.Delete(word)
+				ui.SetWords(&m.flags, m.flagStore.Words())
+				m.loadFlagDetail()
+			}
 		}
 
 	case key.Matches(msg, m.keys.Flag) && m.currentWord != "":
@@ -401,11 +438,34 @@ func (m Model) resize() Model {
 	m.content.Width = rightInnerW
 	m.content.Height = rightInnerH
 
+	snapH := rightInnerH * 6 / 10
+	noteH := rightInnerH - snapH - 4 // subtract borders for two panels
+	noteH = max(noteH, 2)
+	m.flagSnap.Width = rightInnerW
+	m.flagSnap.Height = snapH
+	m.flagNote.SetWidth(rightInnerW)
+	m.flagNote.SetHeight(noteH)
+
 	if m.entry != nil {
 		m.content.SetContent(ui.RenderEntry(m.entry, rightInnerW))
 	}
 
 	return m
+}
+
+// loadFlagDetail populates flagSnap and flagNote for the currently selected flag.
+func (m *Model) loadFlagDetail() {
+	word := ui.SelectedWord(m.flags)
+	if word == "" {
+		m.flagSnap.SetContent("")
+		m.flagNote.SetValue("")
+		return
+	}
+	if e, ok := m.flagStore.Get(word); ok {
+		m.flagSnap.SetContent(e.Snapshot)
+		m.flagSnap.GotoTop()
+		m.flagNote.SetValue(e.Note)
+	}
 }
 
 // View implements tea.Model.
@@ -440,7 +500,35 @@ func (m Model) renderWordList(l list.Model, label string, sec section, width int
 	return ui.BorderWithTitle(l.View(), label, int(sec)+1, width, active)
 }
 
+func (m Model) renderFlagDetail() string {
+	rightW := ui.RightPanelWidth(m.width, ui.LeftPanelWidth(m.width))
+	innerW := rightW - 2
+
+	if ui.SelectedWord(m.flags) == "" {
+		placeholder := lipgloss.NewStyle().
+			Foreground(ui.ColorMuted).
+			Width(innerW).
+			Height(m.content.Height).
+			Align(lipgloss.Center, lipgloss.Center).
+			Render("No flags yet.\nPress f to flag the current word.")
+		style := ui.BorderInactive().Width(innerW)
+		return style.Render(placeholder)
+	}
+
+	snapActive := m.focused == paneRight && m.insertTarget == insertNone
+	snapBorder := ui.BorderWithTitle(m.flagSnap.View(), "Definition Snapshot", 0, rightW, snapActive)
+
+	noteActive := m.insertTarget == insertFlagNote
+	noteBorder := ui.BorderWithTitle(m.flagNote.View(), "Note", 0, rightW, noteActive)
+
+	return lipgloss.JoinVertical(lipgloss.Left, snapBorder, noteBorder)
+}
+
 func (m Model) renderContent() string {
+	if m.activeSection == sectionFlags {
+		return m.renderFlagDetail()
+	}
+
 	active := m.focused == paneRight
 	rightW := ui.RightPanelWidth(m.width, ui.LeftPanelWidth(m.width))
 
