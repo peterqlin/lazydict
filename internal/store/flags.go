@@ -86,7 +86,7 @@ func (fs *FlagStore) Delete(word string) {
 	fs.save()
 }
 
-// All returns all flags in created_at ascending order.
+// All returns all flags in insertion order (created_at ascending for append-only entries).
 func (fs *FlagStore) All() []FlagEntry {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()
@@ -107,7 +107,7 @@ func (fs *FlagStore) Get(word string) (FlagEntry, bool) {
 	return FlagEntry{}, false
 }
 
-// Words returns the list of flagged words in created_at ascending order.
+// Words returns flagged words in insertion order (created_at ascending for append-only entries).
 func (fs *FlagStore) Words() []string {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()

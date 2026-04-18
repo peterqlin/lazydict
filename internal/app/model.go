@@ -374,10 +374,18 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 		}
 
 	case key.Matches(msg, m.keys.ScrollDown):
-		m.content.ScrollDown(3)
+		if m.activeSection == sectionFlags {
+			m.flagSnap.ScrollDown(3)
+		} else {
+			m.content.ScrollDown(3)
+		}
 
 	case key.Matches(msg, m.keys.ScrollUp):
-		m.content.ScrollUp(3)
+		if m.activeSection == sectionFlags {
+			m.flagSnap.ScrollUp(3)
+		} else {
+			m.content.ScrollUp(3)
+		}
 
 	case key.Matches(msg, m.keys.Bookmark) && m.currentWord != "":
 		m.store.ToggleFavorite(m.currentWord)
