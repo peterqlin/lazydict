@@ -35,14 +35,19 @@ func run(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	dataPath := filepath.Join(filepath.Dir(cfgPath), "data.json")
-	if err := os.MkdirAll(filepath.Dir(dataPath), 0700); err != nil {
+	dir := filepath.Dir(cfgPath)
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return fmt.Errorf("create config dir: %w", err)
 	}
 
-	st, err := store.New(dataPath)
+	st, err := store.New(filepath.Join(dir, "data.json"))
 	if err != nil {
 		return fmt.Errorf("open store: %w", err)
+	}
+
+	fs, err := store.NewFlagStore(filepath.Join(dir, "flags.json"))
+	if err != nil {
+		return fmt.Errorf("open flag store: %w", err)
 	}
 
 	initialWord := ""
@@ -50,7 +55,7 @@ func run(cmd *cobra.Command, args []string) error {
 		initialWord = args[0]
 	}
 
-	m := app.New(cfg, st, initialWord)
+	m := app.New(cfg, st, fs, initialWord)
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("TUI error: %w", err)
