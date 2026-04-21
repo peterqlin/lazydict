@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-const maxHistory = 100
+const maxHistory = 1000
 
 type data struct {
 	History   []string `json:"history"`

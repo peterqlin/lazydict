@@ -44,11 +44,11 @@ func TestHistoryDedup(t *testing.T) {
 
 func TestHistoryCap(t *testing.T) {
 	s := newStore(t)
-	for i := 0; i < 105; i++ {
+	for i := 0; i < 1005; i++ {
 		s.AddHistory(fmt.Sprintf("word%d", i))
 	}
-	if len(s.History()) != 100 {
-		t.Errorf("expected 100 entries, got %d", len(s.History()))
+	if len(s.History()) != 1000 {
+		t.Errorf("expected 1000 entries, got %d", len(s.History()))
 	}
 }
 
