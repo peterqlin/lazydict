@@ -54,16 +54,21 @@ func BorderWithTitle(content, label string, num, width int, active bool) string 
 		lblStyle = lipgloss.NewStyle().Foreground(ColorBlue).Bold(true)
 	}
 
-	numStr := fmt.Sprintf("[%d]", num)
-	// All chars are ASCII so len() == visual width.
-	titleSeg := bc.Render("─") + numStyle.Render(numStr) + bc.Render("─") + lblStyle.Render(label)
-	titleSegW := 1 + len(numStr) + 1 + len(label)
+	var titleSeg string
+	var titleSegW int
+	if num > 0 {
+		numStr := fmt.Sprintf("[%d]", num)
+		// All chars are ASCII so len() == visual width.
+		titleSeg = bc.Render("─") + numStyle.Render(numStr) + bc.Render("─") + lblStyle.Render(label)
+		titleSegW = 1 + len(numStr) + 1 + len(label)
+	} else {
+		titleSeg = bc.Render("─") + lblStyle.Render(label)
+		titleSegW = 1 + len(label)
+	}
 
 	innerW := width - 2 // minus two corner chars
 	fillW := innerW - titleSegW
-	if fillW < 0 {
-		fillW = 0
-	}
+	fillW = max(fillW, 0)
 	topLine := bc.Render("╭") + titleSeg + bc.Render(strings.Repeat("─", fillW)) + bc.Render("╮")
 
 	body := lipgloss.NewStyle().
@@ -82,9 +87,7 @@ func KeyHint(key string) string {
 
 func LeftPanelWidth(total int) int {
 	w := total / 4
-	if w < 18 {
-		w = 18
-	}
+	w = max(w, 18)
 	return w
 }
 
