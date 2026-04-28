@@ -1,6 +1,7 @@
 package app_test
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -21,146 +22,77 @@ func newTestModel(t *testing.T) app.Model {
 	if err != nil {
 		t.Fatalf("store: %v", err)
 	}
-	fs, err := store.NewFlagStore(filepath.Join(t.TempDir(), "flags.json"))
-	if err != nil {
-		t.Fatalf("flagstore: %v", err)
-	}
-	return app.New(cfg, st, fs, "")
+	return app.New(cfg, st, "")
 }
 
-func TestLaunchesInTypingMode(t *testing.T) {
+func TestSearchAlwaysFocused(t *testing.T) {
 	m := newTestModel(t)
-	if !m.TypingMode() {
-		t.Error("expected typing mode on launch")
+	if !m.SearchFocused() {
+		t.Error("expected search to be focused on launch")
 	}
 }
 
-func TestEscExitsTypingMode(t *testing.T) {
+func TestEscQuits(t *testing.T) {
 	m := newTestModel(t)
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	m2 := updated.(app.Model)
-	if m2.TypingMode() {
-		t.Error("expected typing mode to be off after Esc")
-	}
-}
-
-func TestIEntersTypingModeWhenSearchActive(t *testing.T) {
-	m := newTestModel(t)
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	m2 := updated.(app.Model)
-	updated2, _ := m2.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'i'}})
-	m3 := updated2.(app.Model)
-	if !m3.TypingMode() {
-		t.Error("expected typing mode after pressing i with search active")
-	}
-}
-
-func TestIIsNoopWhenHistoryActive(t *testing.T) {
-	m := newTestModel(t)
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	m2 := updated.(app.Model)
-	updated2, _ := m2.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-	m3 := updated2.(app.Model)
-	updated3, _ := m3.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'i'}})
-	m4 := updated3.(app.Model)
-	if m4.TypingMode() {
-		t.Error("expected i to be no-op when history section active")
-	}
-}
-
-func TestClearSearchEntersTypingMode(t *testing.T) {
-	m := newTestModel(t)
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	m2 := updated.(app.Model)
-	updated2, _ := m2.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
-	m3 := updated2.(app.Model)
-	if !m3.TypingMode() {
-		t.Error("expected c to enter typing mode in search section")
-	}
-}
-
-func TestQuitInNavMode(t *testing.T) {
-	m := newTestModel(t)
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	m2 := updated.(app.Model)
-	tm := teatest.NewTestModel(t, m2, teatest.WithInitialTermSize(120, 40))
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(120, 40))
+	tm.Send(tea.KeyMsg{Type: tea.KeyEsc})
 	tm.WaitFinished(t, teatest.WithFinalTimeout(3*time.Second))
 }
 
-func TestTabSwitchesPane(t *testing.T) {
+func TestCtrlCQuits(t *testing.T) {
 	m := newTestModel(t)
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	m2 := updated.(app.Model)
-	if m2.FocusedPane() != app.PaneLeft {
-		t.Fatal("expected left pane focus initially")
-	}
-	updated2, _ := m2.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m3 := updated2.(app.Model)
-	if m3.FocusedPane() != app.PaneRight {
-		t.Error("expected right pane focus after Tab")
+	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(120, 40))
+	tm.Send(tea.KeyMsg{Type: tea.KeyCtrlC})
+	tm.WaitFinished(t, teatest.WithFinalTimeout(3*time.Second))
+}
+
+func TestEnterWithEmptyInputNoFetch(t *testing.T) {
+	m := newTestModel(t)
+	m2, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if m2.(app.Model).Loading() {
+		t.Error("expected no fetch when submitting empty search")
 	}
 }
 
-func TestHLCyclesFourSections(t *testing.T) {
+func TestWordFetchedSetsCurrentWord(t *testing.T) {
 	m := newTestModel(t)
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	m2 := updated.(app.Model)
-
-	u, _ := m2.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-	if u.(app.Model).ActiveSection() != app.SectionHistory {
-		t.Errorf("expected History after l from Search, got %v", u.(app.Model).ActiveSection())
-	}
-	u, _ = u.(app.Model).Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-	if u.(app.Model).ActiveSection() != app.SectionFavorites {
-		t.Errorf("expected Favorites after l, got %v", u.(app.Model).ActiveSection())
-	}
-	u, _ = u.(app.Model).Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-	if u.(app.Model).ActiveSection() != app.SectionFlags {
-		t.Errorf("expected Flags after l from Favorites, got %v", u.(app.Model).ActiveSection())
-	}
-	u, _ = u.(app.Model).Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-	if u.(app.Model).ActiveSection() != app.SectionSearch {
-		t.Errorf("expected Search after l from Flags (wrap), got %v", u.(app.Model).ActiveSection())
-	}
-	u, _ = u.(app.Model).Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
-	if u.(app.Model).ActiveSection() != app.SectionFlags {
-		t.Errorf("expected Flags after h from Search (wrap), got %v", u.(app.Model).ActiveSection())
+	entry := &api.Entry{}
+	m2, _ := m.Update(app.WordFetchedMsg{Word: "serendipity", Entry: entry})
+	if m2.(app.Model).CurrentWord() != "serendipity" {
+		t.Errorf("expected currentWord=serendipity, got %q", m2.(app.Model).CurrentWord())
 	}
 }
 
-func TestCacheHitMovesToHistoryTop(t *testing.T) {
+func TestWordFetchedWritesHistory(t *testing.T) {
 	cfg := &config.Config{MWKey: "test", MWThesKey: "test"}
 	st, _ := store.New(filepath.Join(t.TempDir(), "data.json"))
-	fs, _ := store.NewFlagStore(filepath.Join(t.TempDir(), "flags.json"))
-	m := app.New(cfg, st, fs, "")
+	m := app.New(cfg, st, "")
 	entry := &api.Entry{}
-	m2, _ := m.Update(app.WordFetchedMsg{Word: "alpha", Entry: entry})
-	m3, _ := m2.(app.Model).Update(app.WordFetchedMsg{Word: "beta", Entry: entry})
-	m4, _ := m3.(app.Model).Update(tea.KeyMsg{Type: tea.KeyEsc})
-	m5, _ := m4.(app.Model).Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
-	m6, _ := m5.(app.Model).Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
-	_, _ = m6.(app.Model).Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m.Update(app.WordFetchedMsg{Word: "ephemeral", Entry: entry})
 	hist := st.History()
-	if hist[0] != "alpha" {
-		t.Errorf("expected alpha at top after cache hit, got %q", hist[0])
+	if len(hist) == 0 || hist[0] != "ephemeral" {
+		t.Errorf("expected ephemeral at top of history, got %v", hist)
 	}
 }
 
-func TestFlagCurrentWord(t *testing.T) {
-	cfg := &config.Config{MWKey: "test", MWThesKey: "test"}
-	st, _ := store.New(filepath.Join(t.TempDir(), "data.json"))
-	fs, _ := store.NewFlagStore(filepath.Join(t.TempDir(), "flags.json"))
-	m := app.New(cfg, st, fs, "")
-
-	entry := &api.Entry{}
-	m2, _ := m.Update(app.WordFetchedMsg{Word: "ephemeral", Entry: entry})
-	m3, _ := m2.(app.Model).Update(tea.KeyMsg{Type: tea.KeyEsc})
-
-	_, _ = m3.(app.Model).Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
-
-	entries := fs.All()
-	if len(entries) != 1 || entries[0].Word != "ephemeral" {
-		t.Errorf("expected ephemeral to be flagged, got %+v", entries)
+func TestNotFoundSetsErr(t *testing.T) {
+	m := newTestModel(t)
+	m2, _ := m.Update(app.NotFoundMsg{Word: "xyzzy", Suggestions: nil})
+	if m2.(app.Model).Err() == "" {
+		t.Error("expected non-empty error after NotFoundMsg")
 	}
+}
+
+func TestFetchErrSetsErr(t *testing.T) {
+	m := newTestModel(t)
+	m2, _ := m.Update(app.FetchErrMsg{Word: "xyzzy", Err: fmt.Errorf("timeout")})
+	if m2.(app.Model).Err() == "" {
+		t.Error("expected non-empty error after FetchErrMsg")
+	}
+}
+
+func TestWindowSizeDoesNotPanic(t *testing.T) {
+	m := newTestModel(t)
+	m2, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+	_ = m2.(app.Model).View()
 }
