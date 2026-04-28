@@ -179,13 +179,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // resize recalculates component dimensions after a WindowSizeMsg.
 func (m Model) resize() Model {
-	innerW := m.width - 2
+	innerW := max(m.width-2, 1)
 
 	searchH := 3 // 1 input row + 2 border rows
-	contentInnerH := m.height - searchH - 2
-	if contentInnerH < 1 {
-		contentInnerH = 1
-	}
+	contentInnerH := max(m.height-searchH-2, 1)
 
 	m.search.Width = innerW - 2
 	m.content.Width = innerW
