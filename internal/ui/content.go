@@ -109,7 +109,7 @@ func RenderError(msg string) string {
 // RenderWelcome renders the welcome screen shown before any lookup.
 func RenderWelcome() string {
 	title := lipgloss.NewStyle().Bold(true).Foreground(ColorBlue).Render("lazydict")
-	hint := lipgloss.NewStyle().Foreground(ColorMuted).Render("press i to search")
+	hint := lipgloss.NewStyle().Foreground(ColorMuted).Render("define anything")
 	return "\n" + title + "\n\n" + hint + "\n"
 }
 
