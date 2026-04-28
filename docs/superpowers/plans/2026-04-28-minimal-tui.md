@@ -86,6 +86,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -112,6 +113,7 @@ type Model struct {
 	store       *store.Store
 	cfg         *config.Config
 	client      *api.Client
+	keys        KeyMap
 
 	loading     bool
 	err         string
@@ -143,6 +145,7 @@ func New(cfg *config.Config, st *store.Store, initialWord string) Model {
 		store:  st,
 		cfg:    cfg,
 		client: api.NewClient(cfg.MWKey, cfg.MWThesKey),
+		keys:   DefaultKeyMap(),
 	}
 
 	m.search.SetSuggestions(st.History())
@@ -237,9 +240,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		case msg.Type == tea.KeyEsc || msg.String() == "ctrl+c":
+		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-		case msg.Type == tea.KeyEnter:
+		case key.Matches(msg, m.keys.Submit):
 			word := strings.TrimSpace(m.search.Value())
 			if word != "" {
 				m.loading = true
