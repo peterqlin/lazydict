@@ -45,18 +45,13 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("open store: %w", err)
 	}
 
-	fs, err := store.NewFlagStore(filepath.Join(dir, "flags.json"))
-	if err != nil {
-		return fmt.Errorf("open flag store: %w", err)
-	}
-
 	initialWord := ""
 	if len(args) > 0 {
 		initialWord = args[0]
 	}
 
-	m := app.New(cfg, st, fs, initialWord)
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	m := app.New(cfg, st, initialWord)
+	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("TUI error: %w", err)
 	}
