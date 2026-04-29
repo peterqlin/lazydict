@@ -211,7 +211,7 @@ func (m Model) View() string {
 	} else {
 		inner = m.content.View()
 	}
-	contentBox := ui.BorderInactive().Width(innerW).Render(inner)
+	contentBox := ui.BorderInactive().Width(innerW).Height(m.content.Height).Render(inner)
 
 	return lipgloss.JoinVertical(lipgloss.Left, searchBox, contentBox)
 }
